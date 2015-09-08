@@ -1,18 +1,17 @@
 <head>
-  <title>Todo List</title>
+  <title>Tickets balance</title>
 </head>
 
-<body>
+<template name="home">
 	{{> loginButtons}}
 	<div>
-		<button id="reset">Reset !</button>
 		{{#if currentUser}}
 			{{> solde}}
 			{{> presenceTab}}
 			{{> purchaseList}}
 		{{/if}}
 	</div>
-</body>
+</template>
 
 <template name="solde">
 	<h1>Solde :</h1>
@@ -21,10 +20,6 @@
 
 <template name="presenceTab">
 		<h1>Liste des présences ({{presenceCount}})</h1>
-		<form>
-			<button id="addPresence">Ajoutez une présence</button>
-		</form>
-
 		{{#each getPresence}}
 			{{> presence}}
 		{{/each}}
@@ -36,10 +31,6 @@
 
 <template name="purchaseList">
 	<h1>Liste des achats ({{purchaseCount}})</h1>
-	<form>
-		<button id="buyTickets">Acheter des tickets</button>
-		<button id="buySubs">Acheter un abonnement</button>
-	</form>
 
 	<ul>
 		{{#each getPurchase}}
@@ -55,6 +46,5 @@
   	{{else}}
   		<p>Vous avez acheté un abonnement d'un mois le {{createdAt}}.</p>
   	{{/if}}
-
   </li>
 </template>

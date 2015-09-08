@@ -15,14 +15,3 @@ Template.purchaseList.helpers({
     return tickets;
   }
 });
-
-Template.purchaseList.events({
-  "click #buyTickets": function(event) {
-    Meteor.call("buyTickets", 5);
-    return false;
-  },
-  "click #buySubs": function(event) {
-    Meteor.call("buyAbo", 1);
-    return false;
-  }
-});
