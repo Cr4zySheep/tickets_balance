@@ -21,6 +21,8 @@ Router.route('/achats', function() {
 	} else {
         console.log('Access denied');
     }
+
+    this.response.end();
 }, {where: 'server'});
 
 Router.route('/presence', function() {
@@ -39,4 +41,6 @@ Router.route('/presence', function() {
 	} else {
         console.log('Acces refused');
     }
+
+    this.response.end();
 }, {where: 'server'});
