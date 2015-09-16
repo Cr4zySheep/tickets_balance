@@ -6,32 +6,32 @@ Router.route('/achats', function() {
 	var amount = body.amount; //Nombre acheté
 
 	if(!key || key !== "your_key") {
-        console.log('Access denied');
-        this.response.end();
+        this.response.writeHead(403);
+        this.response.end("Invalid API key.\n");
         return;
     }
 
     if(!email) {
-        console.log('An error happened !');
-        this.response.end();
+        this.response.writeHead(404);
+        this.response.end("Missing email address.\n");
         return;
     }
 
     if(!amount) {
-        console.log('An error happened !');
-        this.response.end();
+        this.response.writeHead(404);
+        this.response.end("Missing amount.\n");
         return;
     }
 
     if(!type) {
-        console.log('An error happened !');
-        this.response.end();
+        this.response.writeHead(404);
+        this.response.end("Missing purchase type.\n");
         return;
     }
 
     if(type !== 'tickets' && type !== 'abo') {
-        console.log('An error happened !');
-        this.response.end();
+        this.response.writeHead(404);
+        this.response.end("Unexpected purchase type.\n");
         return;
     }
 
@@ -41,7 +41,8 @@ Router.route('/achats', function() {
     }
     Meteor.call(methodName, email, amount);
     console.log(email + ' bought ' + amount + ' ' + type + '.');
-    this.response.end();
+    this.response.writeHead(200);
+    this.response.end("OK\n");
 
 }, {where: 'server'});
 
@@ -50,17 +51,20 @@ Router.route('/presence', function() {
 	var key = body.key; //API key
 	var email = body.email; //email de la personne
 
-	if(key && key === "your_key")
-	{
-		if(email) {
-            Meteor.call('addPresence', email);
-        }
-		else {
-            console.log('A mistake happened !');
-        }
-	} else {
-        console.log('Acces refused');
+	if(!key || key !== "your_key") {
+        this.response.writeHead(403);
+        this.response.end("Invalid API key.\n");
+        return;
     }
 
-    this.response.end();
+    if(!email) {
+        this.response.writeHead(404);
+        this.response.end("Missing email address.\n");
+        return;
+    }
+
+    Meteor.call('addPresence', email);
+    this.response.writeHead(200);
+    this.response.end("OK\n");
+
 }, {where: 'server'});
