@@ -5,24 +5,44 @@ Router.route('/achats', function() {
 	var email = body.email; //Email de l'acheteur
 	var amount = body.amount; //Nombre acheté
 
-	if(key && key === "your_key")
-	{
-		if(email && amount) {
-            if(type === "tickets") {
-                console.log(email + ' bought ' + amount + ' tickets.');
-                Meteor.call('buyTickets', email, amount);
-            } else if(type === "abo") {
-                console.log(email + ' bought ' + amount + ' abo.');
-                Meteor.call('buyAbo', email, amount);
-            } else {
-                console.log('An error hapenned !');
-            }
-        }
-	} else {
+	if(!key || key !== "your_key") {
         console.log('Access denied');
+        this.response.end();
+        return;
     }
 
+    if(!email) {
+        console.log('An error happened !');
+        this.response.end();
+        return;
+    }
+
+    if(!amount) {
+        console.log('An error happened !');
+        this.response.end();
+        return;
+    }
+
+    if(!type) {
+        console.log('An error happened !');
+        this.response.end();
+        return;
+    }
+
+    if(type !== 'tickets' && type !== 'abo') {
+        console.log('An error happened !');
+        this.response.end();
+        return;
+    }
+
+    var methodName = 'buyAbo';
+    if (type === 'tickets') {
+        methodName = 'buyTickets';
+    }
+    Meteor.call(methodName, email, amount);
+    console.log(email + ' bought ' + amount + ' ' + type + '.');
     this.response.end();
+
 }, {where: 'server'});
 
 Router.route('/presence', function() {
