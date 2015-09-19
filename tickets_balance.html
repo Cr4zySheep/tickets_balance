@@ -7,10 +7,34 @@
 	<div>
 		{{#if currentUser}}
 			{{> solde}}
+			{{> aboList}}
 			{{> presenceTab}}
 			{{> purchaseList}}
 		{{/if}}
 	</div>
+</template>
+
+<template name="aboList">
+	<h1>Liste des abonnements ({{aboCount}})</h1>
+	{{#each getAbo}}
+		{{> abo}}
+	{{/each}}
+</template>
+
+<template name="abo">
+	<h2>Abonnement :</h2>
+	<ul>
+		<li><p>Acheté le : {{createdDate}}</p></li>
+		{{#if hadStarted}}
+			<li><p>Commencé le : {{startedDate}}</p></li>
+			<li><p>Fini le : {{finishedDate}}</p></li>
+		{{else}}
+			<li><form class='abo'>
+				<input id='{{createdAt}}' name='startedDate' class='datepicker'/>
+				<input type='submit'/>
+			</form></li>
+		{{/if}}
+	</ul>
 </template>
 
 <template name="solde">

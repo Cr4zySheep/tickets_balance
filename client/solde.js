@@ -11,11 +11,12 @@ function calcSolde() {
     }, 0);
 
 	var used_tickets = _.reduce(_.pluck(presence.find({}).fetch(), 'createdAt'), function(memo, date) {
-		var abonnements = purchase.find({type: 'abo'}).fetch();
+		var abonnements = purchase.find({type: 'abo', hadStarted: true}).fetch();
 		for(var i in abonnements) {
 			var abo = abonnements[i];
-			var end_abo = moment(abo.createdAt, "YYYY MM DD").add(1, 'months').format("YYYY MM DD");
-			if(abo.createdAt <= date && date < end_abo) return memo;
+			var start_abo = abo.startedAt.format('YYYY MM DD').toString();
+			var end_abo = abo.startedAt.add(1, 'months').format("YYYY MM DD").toString();
+			if(start_abo <= date && date < end_abo) return memo;
 		}
 		return memo + 1;
 	}, 0);
