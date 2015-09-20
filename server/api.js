@@ -57,6 +57,8 @@ Router.route('/presence', function() {
 	var body = this.request.body;
 	var key = body.key; //API key
 	var email = body.email; //email de la personne
+	var date = body.date; //date de la présence
+	var amount = body.amount; //1.0 or 0.5
 
 	if(!key || key !== "your_key") {
         this.response.writeHead(403);
@@ -70,7 +72,34 @@ Router.route('/presence', function() {
         return;
     }
 
-    Meteor.call('addPresence', email);
+    var momentDate;
+    if(!date) {
+        momentDate = moment();
+    } else {
+        momentDate = moment(date);
+    }
+    if(!momentDate.isValid()) {
+        this.response.writeHead(404);
+        this.response.end("Invalid date.\n");
+        return;
+    }
+
+    date = momentDate.format('YYYY-MM-DD');
+
+
+    if(!amount) {
+        amount = '1.0';
+    }
+
+    amount = parseFloat(amount);
+    if(_.isNaN(amount)) {
+        this.response.writeHead(404);
+        this.response.end("Invalid amount"+amount+".\n");
+        return;
+    }
+
+    //TODO error callback
+    Meteor.call('addPresence', email, date, amount);
     this.response.writeHead(200);
     this.response.end("OK\n");
 

@@ -1,10 +1,12 @@
 # Exemple avec curl :
 
 Pour ajouter une présence :
-> 'curl --data "key=your_key&email=a@a.fr" localhost:3000/presence'
+> 'curl --data "key=your_key&email=a@a.fr&date=2015-01-01&amount=0.5" localhost:3000/presence'
 
-key  : clé de l'API  
-email: email de la personne présence  
+key    : clé de l'API
+email  : email de la personne présente
+date   : date de la présence (aujourd'hui par défaut)
+amount : quantité de ticket (1.0 par défaut)
 
 
 Pour ajouter un achat :

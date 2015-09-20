@@ -12,6 +12,6 @@ Meteor.publish("purchase", function() {
 
 Meteor.publish("presence", function() {
     if(this.userId) {
-        return presence.find({owner: Meteor.users.findOne(this.userId).emails[0].address});
+        return presence.find({userId: this.userId});
     }
 });
