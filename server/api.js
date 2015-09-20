@@ -2,14 +2,77 @@ var moment = this.moment;
 var Router = this.Router;
 var Meteor = this.Meteor;
 var Mongo = this.Mongo;
+var Accounts = this.Accounts;
+var purchase = this.purchase;
+var presence = this.presence;
 var _ = this._;
 
-Router.route('/achats', function() {
+function getOrCreateUserId(email) {
+    var user = Meteor.users.findOne({
+        'emails': {
+            $elemMatch: {
+                address: email,
+            },
+        },
+    });
+
+    if (user) {
+        return user._id;
+    }
+
+    return Accounts.createUser({
+        email: email,
+    });
+}
+
+//TODO error callbacks
+
+Router.route('/membership', function() {
 	var body = this.request.body;
-	var key = body.key; //API key
-	var type = body.type; //Tickets ou abonnements
-	var email = body.email; //Email de l'acheteur
-	var amount = body.amount; //Nombre acheté
+	var key = body.key;
+	var email = body.email;
+	var purchaseDate = body.purchaseDate;
+
+	if(!key || key !== Meteor.settings.purchaseApiSecret) {
+        this.response.writeHead(403);
+        this.response.end("Invalid API key.\n");
+        return;
+    }
+
+    if(!email) {
+        this.response.writeHead(404);
+        this.response.end("Missing email address.\n");
+        return;
+    }
+
+    var purchaseMoment;
+    if(!purchaseDate) {
+        purchaseMoment = moment();
+    } else {
+        purchaseMoment = moment(purchaseDate);
+    }
+    if(!purchaseMoment.isValid()) {
+        this.response.writeHead(404);
+        this.response.end("Invalid purchase date.\n");
+        return;
+    }
+
+    purchase.insert({
+        purchaseDate: purchaseMoment.format('YYYY-MM-DD'),
+        userId: getOrCreateUserId(email),
+        membershipStart: purchaseDate,
+    });
+    this.response.writeHead(200);
+    this.response.end("OK\n");
+
+}, {where: 'server'});
+
+Router.route('/tickets', function() {
+	var body = this.request.body;
+	var key = body.key;
+	var email = body.email;
+	var purchaseDate = body.purchaseDate;
+	var amount = body.amount;
 
 	if(!key || key !== Meteor.settings.purchaseApiSecret) {
         this.response.writeHead(403);
@@ -29,25 +92,99 @@ Router.route('/achats', function() {
         return;
     }
 
-    if(!type) {
+    amount = parseInt(amount, 10);
+    if(_.isNaN(amount)) {
         this.response.writeHead(404);
-        this.response.end("Missing purchase type.\n");
+        this.response.end("Invalid amount"+amount+".\n");
         return;
     }
 
-    if(type !== 'tickets' && type !== 'abo') {
+    var purchaseMoment;
+    if(!purchaseDate) {
+        purchaseMoment = moment();
+    } else {
+        purchaseMoment = moment(purchaseDate);
+    }
+    if(!purchaseMoment.isValid()) {
         this.response.writeHead(404);
-        this.response.end("Unexpected purchase type.\n");
+        this.response.end("Invalid purchase date.\n");
         return;
     }
 
-    var methodName = 'buyAbo';
-    if (type === 'tickets') {
-        methodName = 'buyTickets';
+    purchase.insert({
+        purchaseDate: purchaseMoment.format('YYYY-MM-DD'),
+        userId: getOrCreateUserId(email),
+        tickets: amount,
+    });
+    this.response.writeHead(200);
+    this.response.end("OK\n");
+
+}, {where: 'server'});
+
+Router.route('/abos', function() {
+	var body = this.request.body;
+	var key = body.key;
+	var email = body.email;
+	var purchaseDate = body.purchaseDate;
+	var startDate = body.startDate;
+	var amount = body.amount;
+
+	if(!key || key !== Meteor.settings.purchaseApiSecret) {
+        this.response.writeHead(403);
+        this.response.end("Invalid API key.\n");
+        return;
     }
 
-    Meteor.call(methodName, email, amount);
-    console.log(email + ' bought ' + amount + ' ' + type + '.');
+    if(!email) {
+        this.response.writeHead(404);
+        this.response.end("Missing email address.\n");
+        return;
+    }
+
+    var purchaseMoment;
+    if(!purchaseDate) {
+        purchaseMoment = moment();
+    } else {
+        purchaseMoment = moment(purchaseDate);
+    }
+    if(!purchaseMoment.isValid()) {
+        this.response.writeHead(404);
+        this.response.end("Invalid purchase date.\n");
+        return;
+    }
+
+    var startMoment;
+    if(!startDate) {
+        startMoment = moment();
+    } else {
+        startMoment = moment(startDate);
+    }
+    if(!startMoment.isValid()) {
+        this.response.writeHead(404);
+        this.response.end("Invalid start date.\n");
+        return;
+    }
+
+    if(!amount) {
+        amount = '1';
+    }
+
+    amount = parseInt(amount, 10);
+    if(_.isNaN(amount)) {
+        this.response.writeHead(404);
+        this.response.end("Invalid amount"+amount+".\n");
+        return;
+    }
+
+    var i;
+    for (i=0; i<amount; i++) {
+        purchase.insert({
+            purchaseDate: purchaseMoment.format('YYYY-MM-DD'),
+            userId: getOrCreateUserId(email),
+            aboStart: startMoment.format('YYYY-MM-DD'),
+        });
+        startMoment.add(1, 'month');
+    }
     this.response.writeHead(200);
     this.response.end("OK\n");
 
@@ -86,7 +223,6 @@ Router.route('/presence', function() {
 
     date = momentDate.format('YYYY-MM-DD');
 
-
     if(!amount) {
         amount = '1.0';
     }
@@ -98,8 +234,16 @@ Router.route('/presence', function() {
         return;
     }
 
-    //TODO error callback
-    Meteor.call('addPresence', email, date, amount);
+    var userId = getOrCreateUserId(email);
+
+    presence.upsert({
+        userId: userId,
+        date: date,
+    },{
+        userId: userId,
+        date: date,
+        amount: amount,
+    });
     this.response.writeHead(200);
     this.response.end("OK\n");
 

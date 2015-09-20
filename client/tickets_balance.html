@@ -1,0 +1,53 @@
+<head>
+  <title>Tickets balance</title>
+</head>
+
+<template name="home">
+	{{> loginButtons}}
+	<div>
+		{{#if currentUser}}
+			{{> balance}}
+			{{> purchases}}
+			{{> presences}}
+		{{/if}}
+	</div>
+</template>
+
+<template name="balance">
+	<h1>Solde : {{remainingTickets}} ticket(s)</h1>
+</template>
+
+<template name="presences">
+    <h1>Présences</h1>
+    {{#each presences}}
+        {{> presence}}
+    {{/each}}
+</template>
+
+<template name="presence">
+	<p>{{date}}: ({{amount}} ticket utilisé).</p>
+</template>
+
+<template name="purchases">
+	<h1>Liste des paiements</h1>
+    {{#each purchases}}
+        {{> purchase}}
+    {{/each}}
+</template>
+
+<template name="purchase">
+    {{#if tickets}}
+        <p>{{purchaseDate}} : {{tickets}} ticket(s) achetés.</p>
+    {{else}}
+        {{#if membershipStart}}
+            <p>{{purchaseDate}} : adhésion d'une année à partir du {{membershipStart}}.</p>
+        {{else}}
+            <p>{{purchaseDate}} : abonnement d'un mois à partir du {{aboStart}}.
+                <form>
+                    <input type='text' id='{{_id}}' name='startedDate' value={{aboStart}} />
+                    <input type='submit'/>
+                </form>
+            </p>
+        {{/if}}
+    {{/if}}
+</template>
