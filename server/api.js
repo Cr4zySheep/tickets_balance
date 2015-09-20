@@ -11,7 +11,7 @@ Router.route('/achats', function() {
 	var email = body.email; //Email de l'acheteur
 	var amount = body.amount; //Nombre acheté
 
-	if(!key || key !== "your_key") {
+	if(!key || key !== Meteor.settings.purchaseApiSecret) {
         this.response.writeHead(403);
         this.response.end("Invalid API key.\n");
         return;
@@ -60,7 +60,7 @@ Router.route('/presence', function() {
 	var date = body.date; //date de la présence
 	var amount = body.amount; //1.0 or 0.5
 
-	if(!key || key !== "your_key") {
+	if(!key || key !== Meteor.settings.presenceApiSecret) {
         this.response.writeHead(403);
         this.response.end("Invalid API key.\n");
         return;
