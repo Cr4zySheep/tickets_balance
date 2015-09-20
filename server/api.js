@@ -1,3 +1,9 @@
+var moment = this.moment;
+var Router = this.Router;
+var Meteor = this.Meteor;
+var Mongo = this.Mongo;
+var _ = this._;
+
 Router.route('/achats', function() {
 	var body = this.request.body;
 	var key = body.key; //API key
@@ -39,6 +45,7 @@ Router.route('/achats', function() {
     if (type === 'tickets') {
         methodName = 'buyTickets';
     }
+
     Meteor.call(methodName, email, amount);
     console.log(email + ' bought ' + amount + ' ' + type + '.');
     this.response.writeHead(200);
