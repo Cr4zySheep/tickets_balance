@@ -8,6 +8,7 @@
 {
     "presenceApiSecret": "MYSECRETKEY",
     "purchaseApiSecret": "MYOTHERKEY",
+    "mailUrl": "smtp://MYLOGIN%40gmail.com:MYPASSWORD@smtp.gmail.com:465"
 }
 ```
 
