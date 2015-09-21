@@ -3,17 +3,34 @@
 </head>
 
 <template name="home">
-	{{> loginButtons}}
-	<div>
-		{{#if currentUser}}
-			{{> balance}}
-			{{> purchases}}
-			{{> presences}}
-		{{/if}}
-	</div>
+    {{#if selectedUser}}
+        {{> details}}
+    {{else}}
+        {{> users}}
+    {{/if}}
+</template>
+
+<template name="details">
+    {{> balance}}
+    {{> purchases}}
+    {{> presences}}
+</template>
+
+<template name="users">
+    <h1>Utilisateurs</h1>
+    {{#each users}}
+        {{> user}}
+    {{/each}}
+</template>
+
+<template name="user">
+    <p>
+        <a href='#'>{{emails.[0].address}}</a>
+    </p>
 </template>
 
 <template name="balance">
+	<a href='#'>Revenir à la liste</a>
 	<h1>Solde : {{remainingTickets}} ticket(s)</h1>
 </template>
 

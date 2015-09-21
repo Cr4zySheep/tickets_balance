@@ -6,6 +6,7 @@ var _ = this._;
 var moment = this.moment;
 var Pikaday = this.Pikaday;
 var document = this.document;
+var Session = this.Session;
 
 function computeBalance() {
 	var memberships = purchase.find({membershipStart:{$exists: true}}).count();
@@ -38,13 +39,43 @@ function computeBalance() {
 	return 1 + memberships + purchasedTickets - usedTickets;
 }
 
-Template.home.onCreated(function(){
-    this.subscribe("purchase");
-    this.subscribe("presence");
+Template.home.helpers({
+    selectedUser: function() {
+        return Session.get('selectedUser');
+    },
+});
+
+Template.users.onCreated(function(){
+    this.subscribe("allUsers");
+});
+
+Template.users.helpers({
+	users: function() {
+ 		return Meteor.users.find();
+	},
+});
+
+Template.user.events({
+	'click a': function(event) {
+		event.preventDefault();
+        Session.set('selectedUser', Template.instance().data._id);
+	}
+});
+
+Template.details.onCreated(function(){
+    this.subscribe("purchase", Session.get('selectedUser'));
+    this.subscribe("presence", Session.get('selectedUser'));
 });
 
 Template.balance.helpers({
 	remainingTickets: computeBalance,
+});
+
+Template.balance.events({
+	'click a': function(event) {
+		event.preventDefault();
+        Session.set('selectedUser', undefined);
+	}
 });
 
 Template.presences.helpers({
