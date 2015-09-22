@@ -248,3 +248,68 @@ Router.route('/presence', function() {
     this.response.end("OK\n");
 
 }, {where: 'server'});
+
+Router.route('/wook', function() {
+    //TODO check hash
+    var order = this.request.body.order;
+
+    if (order.status !== 'completed') {
+        this.response.writeHead(200);
+        this.response.end("Ignored\n");
+        return;
+    }
+
+    var items = order.line_items;
+    var purchaseDate = moment(order.completed_at).format('YYYY-MM-DD');
+    var email = order.customer.email;
+
+    items.map(function(item){
+        var quantity = item.quantity;
+
+        //FIXME hardcoded values all over
+        switch (item.product_id) {
+            case 3021:
+                purchase.insert({
+                    purchaseDate: purchaseDate,
+                    userId: getOrCreateUserId(email),
+                    tickets: quantity,
+                });
+                break;
+            case 3022:
+                purchase.insert({
+                    purchaseDate: purchaseDate,
+                    userId: getOrCreateUserId(email),
+                    tickets: 10*quantity,
+                });
+                break;
+            case 3023:
+                var startDate = purchaseDate;
+                var startDateMeta = _.first(_.where(item.meta, {key: 12}));
+                if (startDateMeta) {
+                    startDate = startDateMeta.value;
+                }
+                var startMoment = moment(startDate);
+                var i;
+                for (i=0; i<quantity; i++) {
+                    purchase.insert({
+                        purchaseDate: purchaseDate,
+                        userId: getOrCreateUserId(email),
+                        aboStart: startMoment.format('YYYY-MM-DD'),
+                    });
+                    startMoment.add(1, 'month');
+                }
+                break;
+            case 3063:
+                purchase.insert({
+                    purchaseDate: purchaseDate,
+                    userId: getOrCreateUserId(email),
+                    membershipStart: purchaseDate,
+                });
+                break;
+        }
+    });
+
+    this.response.writeHead(200);
+    this.response.end("OK\n");
+
+}, {where: 'server'});
