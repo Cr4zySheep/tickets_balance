@@ -7,37 +7,7 @@ var moment = this.moment;
 var Pikaday = this.Pikaday;
 var document = this.document;
 var Session = this.Session;
-
-function computeBalance() {
-	var memberships = purchase.find({membershipStart:{$exists: true}}).count();
-
-	var tickets = _.pluck(purchase.find({tickets:{$exists: true}}).fetch(), 'tickets');
-
-    var purchasedTickets = _.reduce(tickets, function(memo, amount){
-        return memo + amount;
-    }, 0);
-
-	var usedTickets = _.reduce(
-        presence.find().fetch(),
-        function(memo, presence) {
-            var presenceMoment = moment(presence.date);
-            var oneMonthBefore = presenceMoment.clone().subtract(1, 'month');
-            var coveringAbos = purchase.find({
-                aboStart: {
-                    $gt: oneMonthBefore.format('YYYY-MM-DD'),
-                    $lte: presenceMoment.format('YYYY-MM-DD'),
-                },
-            });
-            if (coveringAbos.count() > 0) {
-                return memo;
-            }
-            return memo + presence.amount;
-        },
-        0);
-
-    // The first ticket is free
-	return 1 + memberships + purchasedTickets - usedTickets;
-}
+var computeBalance = this.computeBalance;
 
 Template.home.helpers({
     selectedUser: function() {
@@ -68,7 +38,9 @@ Template.details.onCreated(function(){
 });
 
 Template.balance.helpers({
-	remainingTickets: computeBalance,
+	remainingTickets: function() {
+        return computeBalance(Session.get('selectedUser'));
+    }
 });
 
 Template.balance.events({
