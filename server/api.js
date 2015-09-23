@@ -6,6 +6,7 @@ var Accounts = this.Accounts;
 var purchase = this.purchase;
 var presence = this.presence;
 var _ = this._;
+var computeBalance = this.computeBalance;
 
 function getOrCreateUserId(email) {
     var user = Meteor.users.findOne({
@@ -312,4 +313,41 @@ Router.route('/wook', function() {
     this.response.writeHead(200);
     this.response.end("OK\n");
 
+}, {where: 'server'});
+
+Router.route('/balance', function() {
+	var body = this.request.body;
+	var key = body.key;
+	var email = body.email;
+
+	if(!key || key !== Meteor.settings.purchaseApiSecret) {
+        this.response.writeHead(403);
+        this.response.end("Invalid API key.\n");
+        return;
+    }
+
+    if(!email) {
+        this.response.writeHead(404);
+        this.response.end("Missing email address.\n");
+        return;
+    }
+
+    var user = Meteor.users.findOne({
+        'emails': {
+            $elemMatch: {
+                address: email,
+            },
+        },
+    });
+
+    if (!user) {
+        this.response.writeHead(404);
+        this.response.end("Invalid email address.\n");
+        return;
+    }
+
+    var balance = computeBalance(user._id);
+
+    this.response.writeHead(200);
+    this.response.end(balance.toString());
 }, {where: 'server'});
