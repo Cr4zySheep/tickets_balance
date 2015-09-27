@@ -19,6 +19,8 @@ Template.users.onCreated(function(){
     this.subscribe("allUsers");
 });
 
+//TODO allow merging two users
+//TODO show the balance of all users (and cache it?)
 Template.users.helpers({
 	users: function() {
  		return Meteor.users.find();
@@ -32,6 +34,8 @@ Template.user.events({
 	}
 });
 
+//TODO show user's email on the details page
+//TODO show a list of the user's mac address
 Template.details.onCreated(function(){
     this.subscribe("purchase", Session.get('selectedUser'));
     this.subscribe("presence", Session.get('selectedUser'));

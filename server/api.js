@@ -26,7 +26,9 @@ function getOrCreateUserId(email) {
     });
 }
 
-//TODO error callbacks
+//TODO log every request
+//TODO read the key from the header and do not process body if invalid
+//TODO use POST for purchases, PUT for presences, GET for balance and backup
 
 Router.route('/membership', function() {
 	var body = this.request.body;
@@ -267,23 +269,22 @@ Router.route('/wook', function() {
     items.map(function(item){
         var quantity = item.quantity;
 
-        //FIXME hardcoded values all over
         switch (item.product_id) {
-            case 3021:
+            case 3021: //ticket
                 purchase.insert({
                     purchaseDate: purchaseDate,
                     userId: getOrCreateUserId(email),
                     tickets: quantity,
                 });
                 break;
-            case 3022:
+            case 3022: //carnet
                 purchase.insert({
                     purchaseDate: purchaseDate,
                     userId: getOrCreateUserId(email),
                     tickets: 10*quantity,
                 });
                 break;
-            case 3023:
+            case 3023: //abonnement
                 var startDate = purchaseDate;
                 var startDateMeta = _.first(_.where(item.meta, {label: 'Date de début'}));
                 if (startDateMeta) {
@@ -300,7 +301,7 @@ Router.route('/wook', function() {
                     startMoment.add(1, 'month');
                 }
                 break;
-            case 3063:
+            case 3063: //carte de membre
                 purchase.insert({
                     purchaseDate: purchaseDate,
                     userId: getOrCreateUserId(email),
@@ -368,3 +369,5 @@ Router.route('/backup', function() {
         })
     );
 }, {where: 'server'});
+
+//TODO add an api endpoint to show the currently present users (and unknown mac addresses)
