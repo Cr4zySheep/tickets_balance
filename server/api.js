@@ -285,7 +285,7 @@ Router.route('/wook', function() {
                 break;
             case 3023:
                 var startDate = purchaseDate;
-                var startDateMeta = _.first(_.where(item.meta, {key: 12}));
+                var startDateMeta = _.first(_.where(item.meta, {label: 'Date de début'}));
                 if (startDateMeta) {
                     startDate = startDateMeta.value;
                 }
