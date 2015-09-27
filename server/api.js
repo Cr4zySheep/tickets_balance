@@ -351,3 +351,20 @@ Router.route('/balance', function() {
     this.response.writeHead(200);
     this.response.end(balance.toString());
 }, {where: 'server'});
+
+Router.route('/backup', function() {
+	var key = this.request.body.key;
+	if(!key || key !== Meteor.settings.presenceApiSecret) {
+        this.response.writeHead(403);
+        this.response.end("Invalid API key.\n");
+        return;
+    }
+    this.response.writeHead(200);
+    this.response.end(
+        JSON.stringify({
+            purchase: purchase.find({}, {sort: {purchaseDate: 1}}).fetch(),
+            presence: presence.find({}, {sort: {date: 1}}).fetch(),
+            users: Meteor.users.find({}, {}).fetch(),
+        })
+    );
+}, {where: 'server'});
