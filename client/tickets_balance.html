@@ -3,6 +3,7 @@
 </head>
 
 <template name="home">
+    {{> loginButtons}}
     {{#if selectedUser}}
         {{> details}}
     {{else}}
