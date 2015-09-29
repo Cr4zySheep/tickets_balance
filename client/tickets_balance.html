@@ -19,6 +19,7 @@
 
 <template name="users">
     <h1>Utilisateurs</h1>
+    <button>Fusionner</button>
     {{#each users}}
         {{> user}}
     {{/each}}
@@ -26,7 +27,10 @@
 
 <template name="user">
     <p>
-        <a href='#'>{{emails.[0].address}}</a>
+        <input type="checkbox" id={{_id}}>
+        {{#each emails}}
+            <a href='#'>{{address}}</a>
+        {{/each}}
     </p>
 </template>
 

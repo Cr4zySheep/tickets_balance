@@ -19,7 +19,15 @@ Template.users.onCreated(function(){
     this.subscribe("allUsers");
 });
 
-//TODO allow merging two users
+Template.users.events({
+    'click button': function(event, template) {
+        var userIds = template.$('input:checked').map(
+            function() {return this.id;}
+        ).get();
+        Meteor.call('merge', userIds);
+    },
+});
+
 //TODO show the balance of all users (and cache it?)
 Template.users.helpers({
 	users: function() {
@@ -31,7 +39,7 @@ Template.user.events({
 	'click a': function(event) {
 		event.preventDefault();
         Session.set('selectedUser', Template.instance().data._id);
-	}
+	},
 });
 
 //TODO show user's email on the details page
