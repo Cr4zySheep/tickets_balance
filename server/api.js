@@ -290,7 +290,7 @@ Router.route('/wook', function() {
                 if (startDateMeta) {
                     startDate = startDateMeta.value;
                 }
-                var startMoment = moment(startDate);
+                var startMoment = moment(startDate, "DD/MM/YYYY");
                 var i;
                 for (i=0; i<quantity; i++) {
                     purchase.insert({
