@@ -35,10 +35,21 @@ Template.users.helpers({
 	},
 });
 
+Template.user.onCreated(function() {
+    this.subscribe("purchase", this.data._id);
+    this.subscribe("presence", this.data._id);
+});
+
+Template.user.helpers({
+    balance: function() {
+        return computeBalance(Template.instance().data._id);
+    },
+});
+
 Template.user.events({
-	'click a': function(event) {
+	'click a': function(event, template) {
 		event.preventDefault();
-        Session.set('selectedUser', Template.instance().data._id);
+        Session.set('selectedUser', template.data._id);
 	},
 });
 
@@ -64,7 +75,7 @@ Template.balance.events({
 
 Template.presences.helpers({
 	presences: function() {
- 		return presence.find({}, {
+ 		return presence.find({userId: Session.get('selectedUser')}, {
             sort: {
                 date: 1,
             },
@@ -74,7 +85,7 @@ Template.presences.helpers({
 
 Template.purchases.helpers({
  	purchases: function() {
- 		return purchase.find({}, {
+ 		return purchase.find({userId: Session.get('selectedUser')}, {
             sort: {
                 purchaseDate: 1,
             },
