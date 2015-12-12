@@ -1,16 +1,13 @@
 var moment = this.moment;
 var Router = this.Router;
 var Meteor = this.Meteor;
-var Mongo = this.Mongo;
 var Accounts = this.Accounts;
-var purchase = this.purchase;
-var presence = this.presence;
 var _ = this._;
 var computeBalance = this.computeBalance;
 
 function getOrCreateUserId(email) {
     var user = Meteor.users.findOne({
-        'emails': {
+        emails: {
             $elemMatch: {
                 address: email,
             },
@@ -23,7 +20,57 @@ function getOrCreateUserId(email) {
 
     return Accounts.createUser({
         email: email,
+        profile: {
+            presences: {},
+            memberships: [],
+            abos: [],
+            tickets: [],
+        },
     });
+}
+
+function addTickets(userId, purchaseDate, amount) {
+    Meteor.users.update(
+        userId, {
+            $push: {
+                'profile.tickets': {
+                    purchaseDate: purchaseDate,
+                    tickets: amount,
+                }
+            }
+        }
+    );
+}
+
+function addMembership(userId, purchaseDate) {
+    Meteor.users.update(
+        userId, {
+            $push: {
+                'profile.memberships': {
+                    purchaseDate: purchaseDate,
+                    membershipStart: purchaseDate,
+                }
+            }
+        }
+    );
+}
+
+function addAbos(userId, purchaseDate, startDate, amount) {
+    var startMoment = moment(startDate);
+    Meteor.users.update(
+        userId, {
+            $push: {
+                'profile.abos': {
+                    $each: _.map(_.range(amount), function (i) {
+                        return {
+                            purchaseDate: purchaseDate,
+                            aboStart: startMoment.clone().add(i, 'months').format('YYYY-MM-DD'),
+                        };
+                    })
+                }
+            }
+        }
+    );
 }
 
 //TODO log every request
@@ -60,11 +107,7 @@ Router.route('/membership', function() {
         return;
     }
 
-    purchase.insert({
-        purchaseDate: purchaseMoment.format('YYYY-MM-DD'),
-        userId: getOrCreateUserId(email),
-        membershipStart: purchaseDate,
-    });
+    addMembership(getOrCreateUserId(email), purchaseMoment.format('YYYY-MM-DD'));
     this.response.writeHead(200);
     this.response.end("OK\n");
 
@@ -114,11 +157,7 @@ Router.route('/tickets', function() {
         return;
     }
 
-    purchase.insert({
-        purchaseDate: purchaseMoment.format('YYYY-MM-DD'),
-        userId: getOrCreateUserId(email),
-        tickets: amount,
-    });
+    addTickets(getOrCreateUserId(email), purchaseMoment.format('YYYY-MM-DD'), amount);
     this.response.writeHead(200);
     this.response.end("OK\n");
 
@@ -179,15 +218,11 @@ Router.route('/abos', function() {
         return;
     }
 
-    var i;
-    for (i=0; i<amount; i++) {
-        purchase.insert({
-            purchaseDate: purchaseMoment.format('YYYY-MM-DD'),
-            userId: getOrCreateUserId(email),
-            aboStart: startMoment.format('YYYY-MM-DD'),
-        });
-        startMoment.add(1, 'month');
-    }
+    addAbos(
+        getOrCreateUserId(email),
+        purchaseMoment.format('YYYY-MM-DD'),
+        startMoment.format('YYYY-MM-DD'),
+        amount);
     this.response.writeHead(200);
     this.response.end("OK\n");
 
@@ -237,16 +272,10 @@ Router.route('/presence', function() {
         return;
     }
 
-    var userId = getOrCreateUserId(email);
+    var presenceEntry = {};
+    presenceEntry['profile.presences.'+date] = amount;
+    Meteor.users.update(getOrCreateUserId(email), {$set: presenceEntry});
 
-    presence.upsert({
-        userId: userId,
-        date: date,
-    },{
-        userId: userId,
-        date: date,
-        amount: amount,
-    });
     this.response.writeHead(200);
     this.response.end("OK\n");
 
@@ -269,44 +298,28 @@ Router.route('/wook', function() {
     items.map(function(item){
         var quantity = item.quantity;
 
+        var userId = getOrCreateUserId(email);
         switch (item.product_id) {
             case 3021: //ticket
-                purchase.insert({
-                    purchaseDate: purchaseDate,
-                    userId: getOrCreateUserId(email),
-                    tickets: quantity,
-                });
+                addTickets(userId, purchaseDate, quantity);
                 break;
             case 3022: //carnet
-                purchase.insert({
-                    purchaseDate: purchaseDate,
-                    userId: getOrCreateUserId(email),
-                    tickets: 10*quantity,
-                });
+                addTickets(userId, purchaseDate, 10*quantity);
                 break;
             case 3023: //abonnement
                 var startDate = purchaseDate;
                 var startDateMeta = _.first(_.where(item.meta, {label: 'Date de début'}));
                 if (startDateMeta) {
-                    startDate = startDateMeta.value;
+                    startDate = moment(startDateMeta.value, "DD/MM/YYYY").format('YYYY-MM-DD');
                 }
-                var startMoment = moment(startDate, "DD/MM/YYYY");
-                var i;
-                for (i=0; i<quantity; i++) {
-                    purchase.insert({
-                        purchaseDate: purchaseDate,
-                        userId: getOrCreateUserId(email),
-                        aboStart: startMoment.format('YYYY-MM-DD'),
-                    });
-                    startMoment.add(1, 'month');
-                }
+                addAbos(
+                    userId,
+                    purchaseDate,
+                    startDate,
+                    quantity);
                 break;
             case 3063: //carte de membre
-                purchase.insert({
-                    purchaseDate: purchaseDate,
-                    userId: getOrCreateUserId(email),
-                    membershipStart: purchaseDate,
-                });
+                addMembership(userId, purchaseDate, purchaseDate);
                 break;
         }
     });
@@ -347,7 +360,7 @@ Router.route('/balance', function() {
         return;
     }
 
-    var balance = computeBalance(user._id);
+    var balance = computeBalance(user);
 
     this.response.writeHead(200);
     this.response.end(balance.toString());
@@ -363,9 +376,7 @@ Router.route('/backup', function() {
     this.response.writeHead(200);
     this.response.end(
         JSON.stringify({
-            purchase: purchase.find({}, {sort: {purchaseDate: 1}}).fetch(),
-            presence: presence.find({}, {sort: {date: 1}}).fetch(),
-            users: Meteor.users.find({}, {}).fetch(),
+            users: Meteor.users.find().fetch(),
         })
     );
 }, {where: 'server'});

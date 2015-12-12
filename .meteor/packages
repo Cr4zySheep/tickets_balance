@@ -10,3 +10,4 @@ accounts-password
 momentjs:moment
 iron:router
 richsilv:pikaday
+percolate:migrations

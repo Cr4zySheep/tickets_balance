@@ -1,7 +1,5 @@
 var Meteor = this.Meteor;
 var Template = this.Template;
-var purchase = this.purchase;
-var presence = this.presence;
 var _ = this._;
 var moment = this.moment;
 var Pikaday = this.Pikaday;
@@ -9,14 +7,14 @@ var document = this.document;
 var Session = this.Session;
 var computeBalance = this.computeBalance;
 
-Template.home.helpers({
-    selectedUser: function() {
-        return Session.get('selectedUser');
-    },
+Template.home.onCreated(function(){
+    this.subscribe("allUsers");
 });
 
-Template.users.onCreated(function(){
-    this.subscribe("allUsers");
+Template.home.helpers({
+    selectedUser: function() {
+        return Session.get('selectedUserId');
+    },
 });
 
 Template.users.events({
@@ -28,37 +26,35 @@ Template.users.events({
     },
 });
 
-//TODO show the balance of all users (and cache it?)
+//TODO cache the balance ?
 Template.users.helpers({
 	users: function() {
  		return Meteor.users.find();
 	},
 });
 
-Template.user.onCreated(function() {
-    this.subscribe("purchase", this.data._id);
-    this.subscribe("presence", this.data._id);
-});
-
 Template.user.helpers({
     balance: function() {
-        return computeBalance(Template.instance().data._id);
+        return computeBalance(Template.instance().data);
     },
+});
+
+this.Tracker.autorun(function() {
+    Session.set(
+        'selectedUser',
+        Meteor.users.findOne(Session.get('selectedUserId'))
+    );
 });
 
 Template.user.events({
 	'click a': function(event, template) {
 		event.preventDefault();
-        Session.set('selectedUser', template.data._id);
+        Session.set('selectedUserId', template.data._id);
 	},
 });
 
 //TODO show user's email on the details page
 //TODO show a list of the user's mac address
-Template.details.onCreated(function(){
-    this.subscribe("purchase", Session.get('selectedUser'));
-    this.subscribe("presence", Session.get('selectedUser'));
-});
 
 Template.balance.helpers({
 	remainingTickets: function() {
@@ -69,27 +65,25 @@ Template.balance.helpers({
 Template.balance.events({
 	'click a': function(event) {
 		event.preventDefault();
-        Session.set('selectedUser', undefined);
+        Session.set('selectedUserId', undefined);
 	}
 });
 
 Template.presences.helpers({
 	presences: function() {
- 		return presence.find({userId: Session.get('selectedUser')}, {
-            sort: {
-                date: 1,
-            },
-        });
+        return _.sortBy(
+            _.pairs(Session.get('selectedUser').profile.presences),
+            function(pair) {return pair[0];}
+        );
 	},
 });
 
 Template.purchases.helpers({
  	purchases: function() {
- 		return purchase.find({userId: Session.get('selectedUser')}, {
-            sort: {
-                purchaseDate: 1,
-            },
-        });
+        var profile = Session.get('selectedUser').profile;
+        return _.sortBy(
+            [].concat(profile.memberships, profile.abos, profile.tickets),
+            'purchaseDate');
  	},
 });
 
@@ -98,7 +92,7 @@ Template.purchase.onRendered(function() {
         var id = this.data._id;
         _.defer(function() {
             new Pikaday({
-                field: document.getElementById(id),
+                field: this.find('[name=startedDate]'),
                 firstDay: 1,
                 format: 'YYYY-MM-DD',
             });
@@ -110,6 +104,11 @@ Template.purchase.events({
 	'submit form': function(event) {
 		event.preventDefault();
 		var date = event.currentTarget.startedDate.value;
-        Meteor.call('editAboStart', this._id, date);
+        Meteor.call(
+            'editAboStart',
+            Session.get('selectedUserId'),
+            this.purchaseDate,
+            this.aboStart,
+            date);
 	}
 });
