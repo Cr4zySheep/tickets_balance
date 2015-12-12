@@ -12,3 +12,10 @@ Meteor.publish("allUsers", function() {
     }
     return [];
 });
+
+Meteor.publish("members", function() {
+    if (isAdmin(this.userId)) {
+        return Meteor.users.find({'profile.memberships':{$ne:[]}},{'emails.address':1, 'profile.memberships':1, _id:0});
+    }
+    return [];
+});

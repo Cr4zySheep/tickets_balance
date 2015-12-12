@@ -1,0 +1,33 @@
+<template name="members">
+    <h1>Membres</h1>
+    <table>
+        <tr>
+            <th>
+                Emails
+            </th>
+            <th>
+                Dernière adhésion
+            </th>
+            <th>
+                Autres adhésions
+            </th>
+        </tr>
+        {{#each members}}
+            {{> member}}
+        {{/each}}
+    </table>
+</template>
+
+<template name="member">
+    <tr style="{{#if isOutdated}}color:grey;{{/if}}">
+        <td>
+            {{emails}}
+        </td>
+        <td>
+            {{latestMembership}}
+        </td>
+        <td>
+            {{otherMemberships}}
+        </td>
+    </tr>
+</template>
