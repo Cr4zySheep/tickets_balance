@@ -366,6 +366,56 @@ Router.route('/balance', function() {
     this.response.end(balance.toString());
 }, {where: 'server'});
 
+// TODO: POST /membership to pay, GET /membership to compute validity
+Router.route('/membershipExpiration', function() {
+	var body = this.request.body;
+	var key = body.key;
+	var email = body.email;
+
+	if(!key || key !== Meteor.settings.purchaseApiSecret) {
+        this.response.writeHead(403);
+        this.response.end("Invalid API key.\n");
+        return;
+    }
+
+    if(!email) {
+        this.response.writeHead(404);
+        this.response.end("Missing email address.\n");
+        return;
+    }
+
+    var user = Meteor.users.findOne({
+        'emails': {
+            $elemMatch: {
+                address: email,
+            },
+        },
+    });
+
+    if (!user) {
+        this.response.writeHead(404);
+        this.response.end("Invalid email address.\n");
+        return;
+    }
+
+    var expiration = 'Pas de cotisation à jour.';
+    if (user.profile &&
+        user.profile.memberships &&
+        user.profile.memberships.length > 0) {
+        var latestMembership = _.last(
+            _.pluck(user.profile.memberships, 'membershipStart').sort()
+        );
+        var expirationMoment = moment(latestMembership).add(1, 'year');
+        if (expirationMoment.isAfter()) {
+            expiration = 'Cotisation à jour jusqu\'au '+
+                expirationMoment.format('DD/MM/YYYY') + '.';
+        }
+    }
+
+    this.response.writeHead(200);
+    this.response.end(expiration);
+}, {where: 'server'});
+
 Router.route('/backup', function() {
 	var key = this.request.body.key;
 	if(!key || key !== Meteor.settings.presenceApiSecret) {
