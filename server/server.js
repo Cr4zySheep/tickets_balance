@@ -19,3 +19,10 @@ Meteor.publish("members", function() {
     }
     return [];
 });
+
+Meteor.publish("logs", function() {
+    if (isAdmin(this.userId)) {
+        return Meteor.logs.find();
+    }
+    return [];
+});

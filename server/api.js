@@ -5,6 +5,10 @@ var Accounts = this.Accounts;
 var _ = this._;
 var computeBalance = this.computeBalance;
 
+function addLogMessage(msg) {
+    Meteor.logs.insert({createdAt: new moment().format('DD/MM/YYYY - HH:mm:ss'), message: msg});
+}
+
 function getOrCreateUserId(email) {
     var user = Meteor.users.findOne({
         emails: {
@@ -40,6 +44,7 @@ function addTickets(userId, purchaseDate, amount) {
             }
         }
     );
+    addLogMessage(userId+' bought '+amount+' tickets at '+purchaseDate);
 }
 
 function addMembership(userId, purchaseDate) {
@@ -53,6 +58,7 @@ function addMembership(userId, purchaseDate) {
             }
         }
     );
+    addLogMessage(userId+' bought membership at '+purchaseDate);
 }
 
 function addAbos(userId, purchaseDate, startDate, amount) {
@@ -71,6 +77,14 @@ function addAbos(userId, purchaseDate, startDate, amount) {
             }
         }
     );
+    addLogMessage(userId+' bought '+amount+' tickets at '+purchaseDate);
+}
+
+function addPresence(userId, presenceDate, amount) {
+    var presenceEntry = {};
+    presenceEntry['profile.presences.'+presenceDate] = amount;
+    Meteor.users.update(userId, {$set: presenceEntry});
+    addLogMessage(userId+' was present at '+presenceDate);
 }
 
 //TODO log every request
@@ -272,10 +286,7 @@ Router.route('/presence', function() {
         return;
     }
 
-    var presenceEntry = {};
-    presenceEntry['profile.presences.'+date] = amount;
-    Meteor.users.update(getOrCreateUserId(email), {$set: presenceEntry});
-
+    addPresence(getOrCreateUserId(email), date, amount);
     this.response.writeHead(200);
     this.response.end("OK\n");
 
@@ -361,6 +372,7 @@ Router.route('/balance', function() {
     }
 
     var balance = computeBalance(user);
+    addLogMessage('Someone asked for the balance of '+user._id);
 
     this.response.writeHead(200);
     this.response.end(balance.toString());
@@ -412,6 +424,7 @@ Router.route('/membershipExpiration', function() {
         }
     }
 
+    addLogMessage('Someone asked for the membership expiration of '+user._id);
     this.response.writeHead(200);
     this.response.end(expiration);
 }, {where: 'server'});
@@ -423,6 +436,8 @@ Router.route('/backup', function() {
         this.response.end("Invalid API key.\n");
         return;
     }
+
+    addLogMessage('Someone asked for backup');
     this.response.writeHead(200);
     this.response.end(
         JSON.stringify({

@@ -7,3 +7,7 @@ Router.route('/', function() {
 Router.route('/members', function() {
 	this.render('members');
 });
+
+Router.route('/logs', function() {
+	this.render('logs');
+});
