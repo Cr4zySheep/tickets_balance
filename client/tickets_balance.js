@@ -17,6 +17,86 @@ Template.home.helpers({
     },
 });
 
+Template.details.events({
+  'click a': function(event, template) {
+    event.preventDefault();
+    Session.set('selectedUserId', undefined);
+  }
+})
+
+Template.editProfil.helpers({
+  emails: function() {
+    var user = Session.get('selectedUser');
+    return user && user.emails;
+  },
+  MACS: function() {
+      var user = Session.get('selectedUser');
+      return user && user.profile && user.profile.MACS;
+    },
+  surname: function() {
+    var user = Session.get('selectedUser');
+    return user && user.profile && user.profile.surname;
+  },
+  name: function() {
+    var user = Session.get('selectedUser');
+    return user && user.profile && user.profile.name;
+  },
+  username: function() {
+    return Session.get('selectedUser').username;
+  },
+  isAdmin: function() {
+    return Meteor.isAdmin(Meteor.userId());
+  }
+});
+
+Template.editProfil.events({
+  'submit': function(event, template) {
+    event.preventDefault(); //No refresh
+
+    if(event.target.name == 'add-email') {
+      console.log('Add an email');
+      Meteor.call('addNewEmail', Session.get('selectedUserId'), event.target[0].value, function(err, result) {
+        if(err) console.log(err.reason);
+      });
+    }
+
+    if(event.target.name == 'edit-email') {
+      console.log('Edit an email');
+      Meteor.call('editEmail', Session.get('selectedUserId'), event.target[0].name, event.target[0].value, function(err, result) {
+        if(err) console.log(err.reason);
+      });
+    }
+
+    if(event.target.name == 'edit-surname') {
+      console.log('Edit surname');
+      Meteor.call('editSurname', Session.get('selectedUserId'), event.target[0].value, function(err, result) {
+        if(err) console.log(err.reason);
+      });
+    }
+
+    if(event.target.name == 'edit-name') {
+      console.log('Edit name');
+      Meteor.call('editName', Session.get('selectedUserId'), event.target[0].value, function(err, result) {
+        if(err) console.log(err.reason);
+      });
+    }
+
+    if(event.target.name == 'add-mac') {
+      console.log('Add mac address');
+      Meteor.call('addMAC', Session.get('selectedUserId'), event.target[0].value, function(err, result) {
+        if(err) console.log(err.reason);
+      });
+    }
+
+    if(event.target.name == 'edit-mac') {
+      console.log('Edit mac address');
+      Meteor.call('editMAC', Session.get('selectedUserId'), event.target[0].name, event.target[0].value, function(err, result) {
+        if(err) console.log(err.reason);
+      });
+    }
+  }
+});
+
 Template.users.events({
     'click button': function(event, template) {
         var userIds = template.$('input:checked').map(
@@ -60,13 +140,6 @@ Template.balance.helpers({
 	remainingTickets: function() {
         return computeBalance(Session.get('selectedUser'));
     }
-});
-
-Template.balance.events({
-	'click a': function(event) {
-		event.preventDefault();
-        Session.set('selectedUserId', undefined);
-	}
 });
 
 Template.presences.helpers({

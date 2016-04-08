@@ -12,9 +12,65 @@
 </template>
 
 <template name="details">
+    <a href='#'>Revenir à la liste</a>
+    {{> editProfil}}
     {{> balance}}
     {{> purchases}}
     {{> presences}}
+</template>
+
+<template name="editProfil">
+  <h1>Profil : {{username}}</h1>
+  {{#if isAdmin}}
+  <p>Ne pas oublier d'appuyer sur entrée pour valider chaque changement</p>
+  <form name="edit-surname">
+    <label>Nom : </label><input type="text" placeholder="Modifier le nom" value="{{surname}}"/>
+  </form>
+  <form name="edit-name">
+    <label>Prénom : </label><input type="text" placeholder="Modifier le prénom" value="{{name}}"/>
+  </form>
+  <br/>
+
+  <label>E-mails :</label>
+  <ul>
+    {{#each emails}}
+    <li> <form name="edit-email"><input title="Appuyer sur entrée pour modifier l'adresse email" name={{address}} value="{{address}}" type="email" placeholder="Modifier l'adresse e-mail"/></form> </li>
+    {{/each}}
+      <li>
+        <form name="add-email"><input title="Appuyer sur entrée pour ajouter une adresse email" type="email" placeholder="Ajouter une adresse e-mail"/></form>
+      </li>
+  </ul>
+
+  <label>Adresses MAC connues :</label>
+  <ul>
+    {{#each MACS}}
+      <li> <form name="edit-mac"><input title="Appuyer sur entrée pour modifier l'adresse MAC" pattern="^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$" name={{address}} value="{{address}}" type="text" placeholder="Modifier l'adresse MAC"/></form> </li>
+    {{/each}}
+    <li>
+      <form name="add-mac"><input title="Appuyer sur entrée pour ajouter une adresse MAC" pattern="^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$" type="text" placeholder="Ajouter une adresse MAC"/></form>
+    </li>
+  </ul>
+
+  {{else}}
+  <label>Nom : {{surname}}</label><br/>
+    <label>Prénom : {{name}}</label>
+  <br/>
+
+  <label>E-mails :</label>
+  <ul>
+    {{#each emails}}
+    <li>{{address}}</li>
+    {{/each}}
+  </ul>
+
+  <label>Adresses MAC connues :</label>
+  <ul>
+    {{#each MACS}}
+      <li>{{address}}</li>
+    {{/each}}
+  </ul>
+
+  {{/if}}
 </template>
 
 <template name="users">
@@ -28,7 +84,7 @@
 <template name="user">
     <p>
         <input type="checkbox" id={{_id}}>
-        <span>{{balance}}</span>
+        <span>{{balance}} : {{username}}</span>
         {{#each emails}}
             <a href='#'>{{address}}</a>
         {{/each}}
@@ -36,7 +92,6 @@
 </template>
 
 <template name="balance">
-	<a href='#'>Revenir à la liste</a>
 	<h1>Solde : {{remainingTickets}} ticket(s)</h1>
 </template>
 
